@@ -109,13 +109,14 @@ export function Sidebar({ pathname, open, onClose }: SidebarProps) {
               Soon
             </span>
           </Link>
-          <button
-            type="button"
+          <Link
+            href="/login"
+            onClick={onClose}
             className="mt-1 flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-slate-600 transition-colors hover:bg-red-50 hover:text-red-700"
           >
             <Icon name="logout" size={18} className="text-slate-400" />
             Log out
-          </button>
+          </Link>
         </div>
       </aside>
     </>
