@@ -14,8 +14,8 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: "PulseHR | Employee self-service",
-    template: "%s | PulseHR",
+    default: "Bembex Lab | Employee self-service",
+    template: "%s | Bembex Lab",
   },
   description: "A focused employee self-service workspace for people, payroll, and time.",
 };

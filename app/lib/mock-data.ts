@@ -7,7 +7,7 @@ export type NavItem = { label: string; href: string; icon: IconName };
 
 export const employee = {
   name: "Ahmed Khan", initials: "AK", employeeId: "EMP-1024", role: "Frontend Developer",
-  department: "Engineering", location: "Lahore, Pakistan", email: "ahmed.khan@pulsehr.dev",
+  department: "Engineering", location: "Lahore, Pakistan", email: "ahmed.khan@bembexlab.com",
   manager: "Sarah Williams", joined: "March 12, 2023",
 } as const;
 
