@@ -74,13 +74,13 @@ export default function LoginPage() {
       </section>
       <section className="flex min-h-screen flex-1 items-center justify-center px-5 py-8 sm:px-8 lg:px-12 xl:px-20">
         <div className="w-full max-w-[430px]">
-          <div className="mb-12 flex items-center gap-2.5 lg:hidden">
-            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-600 text-white">
-              <Icon name="sparkles" size={18} />
+          <div className="mb-12 flex items-center lg:hidden">
+            <span className="flex h-9 w-9 items-center justify-center rounded-xl text-white">
+              <Image className="rounded-md" src="/Bembex logo ( JPG ) Icon White 1.svg" alt="Bembex Lab Logo" width={24} height={24} />
             </span>
-            <span className="text-[15px] font-bold tracking-tight text-slate-950">
+            {/* <span className="text-[15px] font-bold tracking-tight text-slate-950">
               Bembex Lab
-            </span>
+            </span> */}
             <span className="ml-1 border-l border-slate-200 pl-3 text-xs text-slate-400">
               Employee portal
             </span>
