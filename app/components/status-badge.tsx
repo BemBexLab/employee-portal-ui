@@ -1,7 +1,7 @@
-export type StatusBadgeValue = "Present" | "Late" | "Absent" | "Half day" | "Missing checkout" | "Pending" | "Approved" | "Rejected" | "Working" | "On time";
+export type StatusBadgeValue = "On-Time" | "Late" | "Absent" | "Half day" | "Missing checkout" | "Pending" | "Approved" | "Rejected" | "Working";
 
 const statusStyles: Record<StatusBadgeValue, string> = {
-  Present: "bg-emerald-50 text-emerald-700 ring-emerald-600/10",
+  "On-Time": "bg-emerald-50 text-emerald-700 ring-emerald-600/10",
   Approved: "bg-emerald-50 text-emerald-700 ring-emerald-600/10",
   Late: "bg-amber-50 text-amber-700 ring-amber-600/10",
   Pending: "bg-amber-50 text-amber-700 ring-amber-600/10",
@@ -10,7 +10,6 @@ const statusStyles: Record<StatusBadgeValue, string> = {
   "Missing checkout": "bg-orange-50 text-orange-700 ring-orange-600/10",
   Rejected: "bg-rose-50 text-rose-700 ring-rose-600/10",
   Working: "bg-blue-50 text-blue-700 ring-blue-600/10",
-  "On time": "bg-slate-100 text-slate-600 ring-slate-500/10",
 };
 
 type StatusBadgeProps = { status: StatusBadgeValue; showDot?: boolean };

@@ -31,7 +31,7 @@ export type PortalData = {
 };
 
 export type AttendanceDisplayStatus =
-  | "Present"
+  | "On-Time"
   | "Late"
   | "Absent"
   | "Half day"

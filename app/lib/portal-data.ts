@@ -66,7 +66,7 @@ export function getAttendanceStatus(status: string): AttendanceDisplayStatus {
     case "MISSING_CHECKOUT":
       return "Missing checkout";
     default:
-      return "Present";
+      return "On-Time";
   }
 }
 
@@ -101,7 +101,7 @@ function getRemarks(entry: PortalAttendance, status: AttendanceDisplayStatus) {
     );
     return `${minutesLate} minutes after scheduled start`;
   }
-  return "On time";
+  return "On-Time";
 }
 
 export function toAttendanceRecords(data: PortalData): AttendanceRecord[] {
@@ -124,15 +124,15 @@ export function toAttendanceRecords(data: PortalData): AttendanceRecord[] {
 }
 
 export function getAttendanceSummary(records: AttendanceRecord[]) {
-  const presentDays = records.filter(
-    (entry) => entry.status === "Present" || entry.status === "Missing checkout",
+  const onTimeDays = records.filter(
+    (entry) => entry.status === "On-Time" || entry.status === "Missing checkout",
   ).length;
   const lateDays = records.filter((entry) => entry.status === "Late").length;
   const absentDays = records.filter((entry) => entry.status === "Absent").length;
   const halfDays = records.filter((entry) => entry.status === "Half day").length;
 
   return {
-    presentDays,
+    onTimeDays,
     lateDays,
     absentDays,
     halfDays,
