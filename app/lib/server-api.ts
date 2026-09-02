@@ -25,9 +25,45 @@ export async function getEmployeePortal(identity: string) {
   }
 
   if (!response.ok) {
-    throw new PortalApiError("The employee server rejected the request.", response.status);
+    throw new PortalApiError(
+      "The employee server rejected the request.",
+      response.status,
+    );
   }
 
   const data = (await response.json()) as PortalData | null;
   return data;
+}
+
+export async function authenticateEmployee(identity: string, password: string) {
+  let response: Response;
+
+  try {
+    response = await fetch(`${serverUrl}/portal/login`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ identity, password }),
+    });
+  } catch {
+    throw new PortalApiError("The employee server is unavailable.", 503);
+  }
+
+  if (!response.ok) {
+    const body = (await response.json().catch(() => ({}))) as {
+      message?: string;
+    };
+    throw new PortalApiError(
+      body.message ?? "Unable to sign in.",
+      response.status,
+    );
+  }
+
+  return (await response.json()) as {
+    employee: {
+      id: string;
+      employeeCode: string;
+      name: string;
+      email: string | null;
+    };
+  };
 }

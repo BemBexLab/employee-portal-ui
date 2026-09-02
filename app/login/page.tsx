@@ -165,8 +165,8 @@ export default function LoginPage() {
                   <span className="font-semibold text-white">
                     Connected access
                   </span>{" "}
-                  — enter an employee ID from the attendance server (for example,
-                  108). Password verification is not configured yet.
+                  — enter your employee ID or work email and the password
+                  stored on the attendance server.
                 </p>
               </div>
             </div>
