@@ -3,7 +3,6 @@
 import { FormEvent, useState } from "react";
 import { Icon } from "@/app/components/icons";
 import { PageContainer } from "@/app/components/page-container";
-import { requestHistory as initialRequestHistory } from "@/app/lib/mock-data";
 import type { RequestRecord } from "@/app/lib/mock-data";
 import { StatusBadge } from "@/app/components/status-badge";
 import { formatDisplayDate } from "@/app/lib/formatters";
@@ -20,7 +19,7 @@ export default function RequestsPage() {
   const [toDate, setToDate] = useState("2026-08-21");
   const [reason, setReason] = useState("");
   const [note, setNote] = useState("");
-  const [history, setHistory] = useState<RequestRecord[]>(initialRequestHistory);
+  const [history, setHistory] = useState<RequestRecord[]>([]);
   const [notice, setNotice] = useState("");
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -37,7 +36,7 @@ export default function RequestsPage() {
     setHistory((current) => [newRequest, ...current]);
     setReason("");
     setNote("");
-    setNotice("Your request was added to the history in this demo session.");
+    setNotice("Your request was added for this browser session. Server-side request storage is not available yet.");
   }
 
   return <PageContainer>

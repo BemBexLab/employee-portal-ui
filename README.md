@@ -1,4 +1,16 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+This is the Next.js client for the employee portal. It reads employee,
+attendance, shift, and salary data from the Nest server.
+
+Set `SERVER_URL` when the API is not running at the development default:
+
+```env
+SERVER_URL=http://localhost:4000
+```
+
+Start both projects from the repository root with `start-dev.bat`, then sign in
+with an employee code that exists in the server database (for example `108`).
+The current database has no employee-request table, so request submissions are
+kept in the browser session only.
 
 ## Getting Started
 

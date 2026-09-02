@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { EmployeeAvatar } from "@/app/components/employee-avatar";
 import { Icon } from "@/app/components/icons";
-import { employee } from "@/app/lib/mock-data";
 import { LoginForm } from "@/app/login/login-form";
 import Image from "next/image";
 
@@ -48,7 +47,7 @@ export default function LoginPage() {
           </p>
           <div className="mt-12 flex max-w-md items-center gap-4 rounded-2xl border border-slate-800 bg-slate-900/70 p-4">
             <EmployeeAvatar
-              initials={employee.initials}
+              initials="BL"
               size="md"
               className="bg-blue-950 text-blue-300 ring-blue-900"
             />
@@ -102,8 +101,9 @@ export default function LoginPage() {
               className="mt-0.5 shrink-0 text-blue-600"
             />
             <p>
-              <span className="font-semibold text-slate-800">Demo mode</span> —
-              any credentials can be used. Sign in is not connected to a server.
+              <span className="font-semibold text-slate-800">Connected access</span> —
+              enter an employee ID from the attendance server (for example, 108).
+              Password verification is not configured yet.
             </p>
           </div>
           <p className="mt-8 text-center text-xs text-slate-400">

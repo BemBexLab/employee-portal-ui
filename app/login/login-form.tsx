@@ -8,10 +8,33 @@ import { Icon } from "@/app/components/icons";
 export function LoginForm() {
   const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState("");
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    router.push("/dashboard");
+    setSubmitting(true);
+    setError("");
+    const form = new FormData(event.currentTarget);
+
+    try {
+      const response = await fetch("/api/session", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ identity: form.get("identity") }),
+      });
+      const result = (await response.json()) as { message?: string };
+      if (!response.ok) {
+        setError(result.message ?? "Unable to sign in.");
+        return;
+      }
+      router.replace("/dashboard");
+      router.refresh();
+    } catch {
+      setError("Unable to reach the portal. Please try again.");
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   return (
@@ -29,7 +52,7 @@ export function LoginForm() {
           type="text"
           autoComplete="username"
           required
-          placeholder="you@company.com or EMP-1024"
+          placeholder="you@company.com or 108"
           className="h-12 w-full rounded-xl border border-slate-200 bg-white px-3.5 text-sm text-slate-900 shadow-sm outline-none transition placeholder:text-slate-400 hover:border-slate-300 focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
         />
       </div>
@@ -77,15 +100,21 @@ export function LoginForm() {
           />
           Remember me
         </label>
-        <span className="text-xs text-slate-400">Demo access enabled</span>
+        <span className="text-xs text-slate-400">Employee lookup enabled</span>
       </div>
       <button
         type="submit"
-        className="flex h-12 w-full items-center justify-center rounded-xl bg-blue-600 text-sm font-semibold text-white shadow-sm shadow-blue-200 transition hover:bg-blue-700 active:translate-y-px"
+        disabled={submitting}
+        className="flex h-12 w-full items-center justify-center rounded-xl bg-blue-600 text-sm font-semibold text-white shadow-sm shadow-blue-200 transition hover:bg-blue-700 active:translate-y-px disabled:cursor-wait disabled:opacity-70"
       >
-        Sign in to your portal{" "}
+        {submitting ? "Checking employee…" : "Sign in to your portal"}{" "}
         <Icon name="chevronRight" size={17} className="ml-2" />
       </button>
+      {error ? (
+        <p role="alert" className="rounded-xl border border-rose-100 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+          {error}
+        </p>
+      ) : null}
     </form>
   );
 }
