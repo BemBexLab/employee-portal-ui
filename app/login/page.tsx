@@ -25,7 +25,13 @@ export default function LoginPage() {
         </div>
         <div className="relative z-10 flex items-center">
           <span className="flex h-9 w-9 items-center justify-center rounded-xl">
-            <Image className="rounded-md" src="/Bembex logo ( JPG ) Icon White 1.svg" alt="Bembex Lab Logo" width={24} height={24} />
+            <Image
+              className="rounded-md"
+              src="/Bembex logo ( JPG ) Icon White 1.svg"
+              alt="Bembex Lab Logo"
+              width={24}
+              height={24}
+            />
           </span>
           <span className="text-[15px] font-bold tracking-tight">
             Bembex Lab
@@ -46,11 +52,20 @@ export default function LoginPage() {
             one place.
           </p>
           <div className="mt-12 flex max-w-md items-center gap-4 rounded-2xl border border-slate-800 bg-slate-900/70 p-4">
-            <EmployeeAvatar
+            {/* <EmployeeAvatar
               initials="BL"
               size="md"
               className="bg-blue-950 text-blue-300 ring-blue-900"
-            />
+            /> */}
+            <span className="flex h-9 w-9 items-center justify-center rounded-xl">
+              <Image
+                className="rounded-2xl"
+                src="/Bembex logo ( JPG ) Icon White 1.svg"
+                alt="Bembex Lab Logo"
+                width={44}
+                height={44}
+              />
+            </span>
             <div>
               <p className="text-sm font-medium text-slate-200">
                 A clearer workday starts here.
@@ -75,7 +90,13 @@ export default function LoginPage() {
         <div className="w-full max-w-[430px]">
           <div className="mb-12 flex items-center lg:hidden">
             <span className="flex h-9 w-9 items-center justify-center rounded-xl text-white">
-              <Image className="rounded-md" src="/Bembex logo ( JPG ) Icon White 1.svg" alt="Bembex Lab Logo" width={24} height={24} />
+              <Image
+                className="rounded-md"
+                src="/Bembex logo ( JPG ) Icon White 1.svg"
+                alt="Bembex Lab Logo"
+                width={34}
+                height={34}
+              />
             </span>
             {/* <span className="text-[15px] font-bold tracking-tight text-slate-950">
               Bembex Lab
@@ -101,9 +122,11 @@ export default function LoginPage() {
               className="mt-0.5 shrink-0 text-blue-600"
             />
             <p>
-              <span className="font-semibold text-slate-800">Connected access</span> —
-              enter an employee ID from the attendance server (for example, 108).
-              Password verification is not configured yet.
+              <span className="font-semibold text-slate-800">
+                Connected access
+              </span>{" "}
+              — enter an employee ID from the attendance server (for example,
+              108). Password verification is not configured yet.
             </p>
           </div>
           <p className="mt-8 text-center text-xs text-slate-400">
