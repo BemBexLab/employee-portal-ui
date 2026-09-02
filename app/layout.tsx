@@ -28,6 +28,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <head>
+        <link rel="icon" href="/icon.svg" type="image/svg+xml" />
         <script
           dangerouslySetInnerHTML={{
             __html: `(function(){try{var key='employee-portal-theme';var saved=localStorage.getItem(key);var theme=saved==='dark'||saved==='light'?saved:(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');document.documentElement.classList.toggle('dark',theme==='dark');document.documentElement.style.colorScheme=theme;}catch(e){}})();`,
