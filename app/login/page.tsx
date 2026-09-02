@@ -8,6 +8,8 @@ export const metadata: Metadata = {
   description: "Sign in to your Bembex Lab employee self-service portal.",
 };
 
+export const dynamic = "force-static";
+
 export default function LoginPage() {
   return (
     <main className="grid min-h-screen bg-slate-50 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.05fr)]">

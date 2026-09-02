@@ -1,23 +1,17 @@
+"use client";
+
 import { DashboardShell } from "@/app/components/dashboard-shell";
 import { PortalProvider } from "@/app/components/portal-provider";
-import { getEmployeePortal } from "@/app/lib/server-api";
-import { cookies } from "next/headers";
-import { redirect } from "next/navigation";
 
-export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
-  const identity = (await cookies()).get("employee_portal_identity")?.value;
-  if (!identity) redirect("/login");
+export const dynamic = "force-static";
 
-  let data;
-  try {
-    data = await getEmployeePortal(identity);
-  } catch {
-    redirect("/login?error=server");
-  }
-  if (!data || !data.employee.isActive) redirect("/login?error=session");
-
+export default function DashboardLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
-    <PortalProvider data={data}>
+    <PortalProvider>
       <DashboardShell>{children}</DashboardShell>
     </PortalProvider>
   );

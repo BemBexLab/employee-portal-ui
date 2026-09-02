@@ -6,7 +6,34 @@ import {
   PortalApiError,
 } from "@/app/lib/server-api";
 
+export const dynamic = "force-dynamic";
+
 const sessionCookie = "employee_portal_identity";
+
+export async function GET() {
+  const identity = (await cookies()).get(sessionCookie)?.value;
+
+  if (!identity) {
+    return NextResponse.json({ message: "Not signed in." }, { status: 401 });
+  }
+
+  try {
+    const data = await getEmployeePortal(identity);
+    if (!data || !data.employee.isActive) {
+      return NextResponse.json(
+        { message: "Session is no longer valid." },
+        { status: 401 },
+      );
+    }
+    return NextResponse.json({ employee: data.employee, attendance: data.attendance });
+  } catch (error) {
+    const status = error instanceof PortalApiError ? error.status : 500;
+    return NextResponse.json(
+      { message: "Unable to reach the employee server. Please try again." },
+      { status: status >= 500 ? 503 : status },
+    );
+  }
+}
 
 export async function POST(request: Request) {
   let identity = "";
