@@ -58,38 +58,50 @@ export default function AttendancePage() {
       return matchesCycle && matchesStatus && matchesSearch;
     });
   }, [attendanceHistory, cycle, searchQuery, statusFilter]);
+  const attendancePercentage = (value: number) =>
+    summary.workingDays
+      ? Math.round((value / summary.workingDays) * 100)
+      : 0;
   const cards = [
     {
       label: "On-Time Days",
       value: summary.onTimeDays,
-      helper: "Days recorded",
+      helper: "Arrived as scheduled",
       icon: "check" as const,
       tone: "bg-emerald-50 text-emerald-600",
       valueTone: "text-emerald-700",
+      accent: "bg-emerald-500",
+      percentage: attendancePercentage(summary.onTimeDays),
     },
     {
       label: "Late Days",
       value: summary.lateDays,
-      helper: "Needs attention",
+      helper: "Arrived after schedule",
       icon: "clock" as const,
       tone: "bg-amber-50 text-amber-600",
       valueTone: "text-amber-700",
+      accent: "bg-amber-500",
+      percentage: attendancePercentage(summary.lateDays),
     },
     {
       label: "Absent Days",
       value: summary.absentDays,
-      helper: "No attendance",
+      helper: "No attendance recorded",
       icon: "arrowDown" as const,
       tone: "bg-rose-50 text-rose-600",
       valueTone: "text-rose-700",
+      accent: "bg-rose-500",
+      percentage: attendancePercentage(summary.absentDays),
     },
     {
       label: "Working Days",
       value: summary.workingDays,
-      helper: "Records this month",
+      helper: "Total cycle records",
       icon: "calendar" as const,
       tone: "bg-blue-50 text-blue-600",
       valueTone: "text-blue-700",
+      accent: "bg-blue-500",
+      percentage: summary.workingDays ? 100 : 0,
     },
   ];
 
@@ -122,23 +134,33 @@ export default function AttendancePage() {
         {cards.map((card) => (
           <article
             key={card.label}
-            className="flex items-center gap-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm shadow-slate-200/40"
+            className="group relative overflow-hidden rounded-2xl border border-slate-200 bg-white p-5 shadow-sm shadow-slate-200/40 transition-all duration-200 hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-md hover:shadow-slate-200/50"
           >
-            <span
-              className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${card.tone}`}
-            >
-              <Icon name={card.icon} size={18} />
-            </span>
-            <div>
-              <p
-                className={`text-2xl font-semibold tracking-tight ${card.valueTone}`}
-              >
-                {card.value}
-              </p>
-              <p className="mt-0.5 text-sm font-medium text-slate-700">
-                {card.label}
-              </p>
-              <p className="mt-1 text-xs text-slate-400">{card.helper}</p>
+            <span className={`absolute inset-x-0 top-0 h-1 ${card.accent}`} />
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-slate-500">
+                  {card.label}
+                </p>
+                <p className={`mt-3 text-3xl font-semibold leading-none tracking-tight ${card.valueTone}`}>
+                  {card.value.toString().padStart(2, "0")}
+                </p>
+              </div>
+              <span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ring-1 ring-inset ring-slate-200 transition-transform duration-200 group-hover:scale-105 ${card.tone}`}>
+                <Icon name={card.icon} size={19} strokeWidth={2} />
+              </span>
+            </div>
+            <div className="mt-6 h-1.5 overflow-hidden rounded-full bg-slate-100">
+              <span
+                className={`block h-full rounded-full transition-[width] duration-500 ${card.accent}`}
+                style={{ width: `${card.percentage}%` }}
+              />
+            </div>
+            <div className="mt-3 flex items-center justify-between gap-3">
+              <p className="truncate text-xs text-slate-400">{card.helper}</p>
+              <span className="shrink-0 rounded-md bg-slate-100 px-2 py-1 text-[10px] font-bold tabular-nums text-slate-600">
+                {card.percentage}%
+              </span>
             </div>
           </article>
         ))}
