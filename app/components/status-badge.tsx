@@ -1,4 +1,14 @@
-export type StatusBadgeValue = "On-Time" | "Late" | "Absent" | "Half day" | "Missing checkout" | "Pending" | "Approved" | "Rejected" | "Working";
+export type StatusBadgeValue =
+  | "On-Time"
+  | "Late"
+  | "Absent"
+  | "Half day"
+  | "Missing checkout"
+  | "Pending"
+  | "Approved"
+  | "Rejected"
+  | "Cancelled"
+  | "Working";
 
 const statusStyles: Record<StatusBadgeValue, string> = {
   "On-Time": "bg-emerald-50 text-emerald-700 ring-emerald-600/10",
@@ -9,6 +19,7 @@ const statusStyles: Record<StatusBadgeValue, string> = {
   "Half day": "bg-violet-50 text-violet-700 ring-violet-600/10",
   "Missing checkout": "bg-orange-50 text-orange-700 ring-orange-600/10",
   Rejected: "bg-rose-50 text-rose-700 ring-rose-600/10",
+  Cancelled: "bg-slate-100 text-slate-600 ring-slate-500/10",
   Working: "bg-blue-50 text-blue-700 ring-blue-600/10",
 };
 
