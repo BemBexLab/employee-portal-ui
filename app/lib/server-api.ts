@@ -219,3 +219,48 @@ export async function deleteAttendanceCorrection(correctionId: string) {
     );
   }
 }
+
+export type PayrollDeduction = {
+  cycle: string;
+  lateDays: number;
+  halfDays: number;
+  absentDays: number;
+  lateHalfDayDeductionDays: number;
+  totalDeductionDays: number;
+  monthlySalary: number;
+  payrollDays: number;
+  dailyRate: number;
+  deductionAmount: number;
+  calculatedThrough: string | null;
+};
+
+export async function fetchPayrollDeductionServer(
+  cycle?: string,
+): Promise<PayrollDeduction | null> {
+  let response: Response;
+  const cycleQuery = cycle
+    ? `?cycle=${encodeURIComponent(cycle)}`
+    : "";
+
+  try {
+    response = await fetch(
+      `${serverUrl}/portal/deductions${cycleQuery}`,
+      { cache: "no-store" },
+    );
+  } catch {
+    throw new PortalApiError("The employee server is unavailable.", 503);
+  }
+
+  if (response.status === 404) return null;
+  if (!response.ok) {
+    const body = (await response.json().catch(() => ({}))) as {
+      message?: string;
+    };
+    throw new PortalApiError(
+      body.message ?? "Request failed.",
+      response.status,
+    );
+  }
+
+  return (await response.json()) as PayrollDeduction;
+}
