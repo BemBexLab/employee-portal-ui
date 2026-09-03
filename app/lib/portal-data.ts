@@ -123,30 +123,53 @@ export function toAttendanceRecords(data: PortalData): AttendanceRecord[] {
   });
 }
 
+function isWeekend(date: string) {
+  const [year, month, day] = date.slice(0, 10).split("-").map(Number);
+  const weekday = new Date(Date.UTC(year, month - 1, day)).getUTCDay();
+  return weekday === 0 || weekday === 6;
+}
+
 export function getAttendanceSummary(records: AttendanceRecord[]) {
-  const onTimeDays = records.filter(
+  const workdayRecords = records.filter((entry) => !isWeekend(entry.date));
+  const onTimeDays = workdayRecords.filter(
     (entry) => entry.status === "On-Time" || entry.status === "Missing checkout",
   ).length;
-  const lateDays = records.filter((entry) => entry.status === "Late").length;
-  const absentDays = records.filter((entry) => entry.status === "Absent").length;
-  const halfDays = records.filter((entry) => entry.status === "Half day").length;
+  const lateDays = workdayRecords.filter((entry) => entry.status === "Late").length;
+  const absentDays = workdayRecords.filter((entry) => entry.status === "Absent").length;
+  const halfDays = workdayRecords.filter((entry) => entry.status === "Half day").length;
 
   return {
     onTimeDays,
     lateDays,
     absentDays,
     halfDays,
-    workingDays: records.length,
-    deductionDays: absentDays + halfDays * 0.5,
+    workingDays: workdayRecords.length,
+    deductionDays: absentDays + (lateDays + halfDays) / 3,
   };
 }
 
-export function getPayroll(monthlySalary: number, deductionDays: number) {
+export function getPayrollCycleDays(cycleKey: string) {
+  const { start, end } = getPayrollCycleRange(cycleKey);
+  const [sy, sm, sd] = start.split("-").map(Number);
+  const [ey, em, ed] = end.split("-").map(Number);
+  const startMs = Date.UTC(sy, sm - 1, sd);
+  const endMs = Date.UTC(ey, em - 1, ed);
+  return Math.round((endMs - startMs) / (1000 * 60 * 60 * 24)) + 1;
+}
+
+export function getPayroll(
+  monthlySalary: number,
+  deductionDays: number,
+  cycleDays: number,
+) {
   const grossSalary = Number.isFinite(monthlySalary) ? monthlySalary : 0;
-  const deductionAmount = Math.round((grossSalary / 30) * deductionDays);
+  const safeCycleDays =
+    Number.isFinite(cycleDays) && cycleDays > 0 ? cycleDays : 30;
+  const deductionAmount = Math.round((grossSalary / safeCycleDays) * deductionDays);
   return {
     grossSalary,
     deductionAmount,
     totalSalaryToReceive: Math.max(0, grossSalary - deductionAmount),
+    cycleDays: safeCycleDays,
   };
 }

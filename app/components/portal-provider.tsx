@@ -33,8 +33,10 @@ export function PortalProvider({ initialData, children }: ProviderProps) {
     try {
       const response = await fetch("/api/session", { cache: "no-store" });
       if (response.status === 401) {
+        if (typeof window !== "undefined" && window.location.pathname !== "/login") {
+          router.replace("/login");
+        }
         setData(null);
-        router.replace("/login");
         return;
       }
       if (!response.ok) {

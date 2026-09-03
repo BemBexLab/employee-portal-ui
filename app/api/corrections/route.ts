@@ -1,17 +1,17 @@
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
-import { serverUrl } from "@/app/lib/server-api";
+import { PortalApiError } from "@/app/lib/server-api";
 import type {
   AttendanceCorrection,
   CreateAttendanceCorrectionPayload,
   ComplaintTypeApi,
 } from "@/app/lib/server-api";
-import { PortalApiError } from "@/app/lib/server-api";
 
 export const dynamic = "force-dynamic";
 
 const sessionCookie = "employee_portal_identity";
 const bffSharedSecret = process.env.BFF_SHARED_SECRET ?? "";
+const nestServerUrl = process.env.SERVER_URL ?? "";
 
 type ErrorBody = { message: string };
 
@@ -28,18 +28,30 @@ function buildAuthHeaders(employeeCode: string): HeadersInit {
   return headers;
 }
 
-export async function GET() {
-  const identity = (await cookies()).get(sessionCookie)?.value;
-  if (!identity) return errorResponse(401, "Not signed in.");
+function requireEnv(): NextResponse | null {
+  if (!nestServerUrl) {
+    return errorResponse(
+      500,
+      "SERVER_URL is not configured on the client deployment.",
+    );
+  }
   if (!bffSharedSecret) {
     return errorResponse(
       500,
-      "BFF shared secret is not configured on the client.",
+      "BFF_SHARED_SECRET is not configured on the client deployment.",
     );
   }
+  return null;
+}
+
+export async function GET() {
+  const identity = (await cookies()).get(sessionCookie)?.value;
+  if (!identity) return errorResponse(401, "Not signed in.");
+  const envError = requireEnv();
+  if (envError) return envError;
 
   try {
-    const response = await fetch(`${serverUrl}/portal/corrections`, {
+    const response = await fetch(`${nestServerUrl}/portal/corrections`, {
       method: "GET",
       cache: "no-store",
       headers: buildAuthHeaders(identity),
@@ -66,12 +78,8 @@ export async function GET() {
 export async function POST(request: Request) {
   const identity = (await cookies()).get(sessionCookie)?.value;
   if (!identity) return errorResponse(401, "Not signed in.");
-  if (!bffSharedSecret) {
-    return errorResponse(
-      500,
-      "BFF shared secret is not configured on the client.",
-    );
-  }
+  const envError = requireEnv();
+  if (envError) return envError;
 
   let raw: Record<string, unknown>;
   try {
@@ -84,7 +92,7 @@ export async function POST(request: Request) {
   if (!body) return errorResponse(400, "Invalid request body.");
 
   try {
-    const response = await fetch(`${serverUrl}/portal/corrections`, {
+    const response = await fetch(`${nestServerUrl}/portal/corrections`, {
       method: "POST",
       cache: "no-store",
       headers: {

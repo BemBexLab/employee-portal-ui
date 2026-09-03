@@ -1,16 +1,12 @@
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
-import { serverUrl } from "@/app/lib/server-api";
-import type {
-  CreateEmployeeRequestPayload,
-  EmployeeRequest,
-} from "@/app/lib/server-api";
 import { PortalApiError } from "@/app/lib/server-api";
 
 export const dynamic = "force-dynamic";
 
 const sessionCookie = "employee_portal_identity";
 const bffSharedSecret = process.env.BFF_SHARED_SECRET ?? "";
+const nestServerUrl = process.env.SERVER_URL ?? "";
 
 type ErrorBody = { message: string };
 
@@ -27,88 +23,20 @@ function buildAuthHeaders(employeeCode: string): HeadersInit {
   return headers;
 }
 
-export async function GET() {
-  const identity = (await cookies()).get(sessionCookie)?.value;
-  if (!identity) return errorResponse(401, "Not signed in.");
+function requireEnv(): NextResponse | null {
+  if (!nestServerUrl) {
+    return errorResponse(
+      500,
+      "SERVER_URL is not configured on the client deployment.",
+    );
+  }
   if (!bffSharedSecret) {
     return errorResponse(
       500,
-      "BFF shared secret is not configured on the client.",
+      "BFF_SHARED_SECRET is not configured on the client deployment.",
     );
   }
-
-  try {
-    const response = await fetch(`${serverUrl}/portal/requests`, {
-      method: "GET",
-      cache: "no-store",
-      headers: buildAuthHeaders(identity),
-    });
-    if (!response.ok) {
-      const body = (await response.json().catch(() => ({}))) as {
-        message?: string;
-      };
-      throw new PortalApiError(
-        body.message ?? "Request failed.",
-        response.status,
-      );
-    }
-    const data = (await response.json()) as EmployeeRequest[];
-    return NextResponse.json<EmployeeRequest[]>(data);
-  } catch (error) {
-    const status = error instanceof PortalApiError ? error.status : 500;
-    const message =
-      error instanceof PortalApiError ? error.message : "Request failed.";
-    return errorResponse(status >= 500 ? 503 : status, message);
-  }
-}
-
-export async function POST(request: Request) {
-  const identity = (await cookies()).get(sessionCookie)?.value;
-  if (!identity) return errorResponse(401, "Not signed in.");
-  if (!bffSharedSecret) {
-    return errorResponse(
-      500,
-      "BFF shared secret is not configured on the client.",
-    );
-  }
-
-  let raw: Record<string, unknown>;
-  try {
-    raw = (await request.json()) as Record<string, unknown>;
-  } catch {
-    return errorResponse(400, "Invalid request body.");
-  }
-
-  const body = normalizeRequest(raw);
-  if (!body) return errorResponse(400, "Invalid request body.");
-
-  try {
-    const response = await fetch(`${serverUrl}/portal/requests`, {
-      method: "POST",
-      cache: "no-store",
-      headers: {
-        ...buildAuthHeaders(identity),
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(body),
-    });
-    if (!response.ok) {
-      const body = (await response.json().catch(() => ({}))) as {
-        message?: string;
-      };
-      throw new PortalApiError(
-        body.message ?? "Request failed.",
-        response.status,
-      );
-    }
-    const result = (await response.json()) as { id: string; submittedAt: string };
-    return NextResponse.json(result, { status: 201 });
-  } catch (error) {
-    const status = error instanceof PortalApiError ? error.status : 500;
-    const message =
-      error instanceof PortalApiError ? error.message : "Request failed.";
-    return errorResponse(status >= 500 ? 503 : status, message);
-  }
+  return null;
 }
 
 export async function DELETE(
@@ -117,26 +45,22 @@ export async function DELETE(
 ) {
   const identity = (await cookies()).get(sessionCookie)?.value;
   if (!identity) return errorResponse(401, "Not signed in.");
-  if (!bffSharedSecret) {
-    return errorResponse(
-      500,
-      "BFF shared secret is not configured on the client.",
-    );
-  }
+  const envError = requireEnv();
+  if (envError) return envError;
 
   const { requestId } = await context.params;
   if (!requestId) return errorResponse(400, "Missing request id.");
 
   try {
     const response = await fetch(
-      `${serverUrl}/portal/requests/${encodeURIComponent(requestId)}`,
+      `${nestServerUrl}/portal/requests/${encodeURIComponent(requestId)}`,
       {
         method: "DELETE",
         cache: "no-store",
         headers: buildAuthHeaders(identity),
       },
     );
-    if (!response.ok) {
+    if (!response.ok && response.status !== 204) {
       const body = (await response.json().catch(() => ({}))) as {
         message?: string;
       };
@@ -152,41 +76,4 @@ export async function DELETE(
       error instanceof PortalApiError ? error.message : "Request failed.";
     return errorResponse(status >= 500 ? 503 : status, message);
   }
-}
-
-function normalizeRequest(
-  raw: Record<string, unknown>,
-): CreateEmployeeRequestPayload | null {
-  const kind =
-    raw.kind === "LEAVE" || raw.kind === "REMOTE_WORK" ? raw.kind : null;
-  const fromDate = typeof raw.fromDate === "string" ? raw.fromDate : "";
-  const toDate = typeof raw.toDate === "string" ? raw.toDate : "";
-  const reason = typeof raw.reason === "string" ? raw.reason.trim() : "";
-  const note = typeof raw.note === "string" ? raw.note : undefined;
-  const leaveCategoryRaw = raw.leaveCategory;
-  const validCategories = [
-    "ANNUAL_LEAVE",
-    "SICK_LEAVE",
-    "CASUAL_LEAVE",
-    "UNPAID_LEAVE",
-  ] as const;
-
-  if (!kind || !fromDate || !toDate || !reason) return null;
-  if (fromDate > toDate) return null;
-
-  const leaveCategory =
-    kind === "LEAVE" &&
-    typeof leaveCategoryRaw === "string" &&
-    (validCategories as readonly string[]).includes(leaveCategoryRaw)
-      ? (leaveCategoryRaw as (typeof validCategories)[number])
-      : undefined;
-
-  return {
-    kind,
-    leaveCategory,
-    fromDate,
-    toDate,
-    reason,
-    note,
-  };
 }

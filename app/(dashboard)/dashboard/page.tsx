@@ -8,6 +8,7 @@ import { usePortal } from "@/app/components/portal-provider";
 import {
   formatPayrollCycle,
   getAttendanceSummary,
+  getPayrollCycleDays,
   getPayrollCycleKey,
   getPayroll,
   isInPayrollCycle,
@@ -29,6 +30,7 @@ export default function DashboardPage() {
   const payrollOverview = getPayroll(
     data.employee.monthlySalary,
     summary.deductionDays,
+    getPayrollCycleDays(latestCycle),
   );
   const deductionPercent = payrollOverview.grossSalary
     ? Math.round(
