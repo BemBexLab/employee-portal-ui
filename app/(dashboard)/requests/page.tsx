@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useEffect, useRef, useState } from "react";
 import { Icon } from "@/app/components/icons";
 import { PageContainer } from "@/app/components/page-container";
 import { StatusBadge } from "@/app/components/status-badge";
@@ -33,6 +33,8 @@ type RequestRecord = {
   status: "Pending" | "Approved" | "Rejected" | "Cancelled";
   reason: string;
 };
+
+const POLL_INTERVAL_MS = 60_000;
 
 const leaveCategoryToApi: Record<LeaveTypeUI, ApiRequest["leaveCategory"]> = {
   "Annual Leave": "ANNUAL_LEAVE",
@@ -107,27 +109,67 @@ export default function RequestsPage() {
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [notice, setNotice] = useState<{ tone: "success" | "error"; text: string } | null>(null);
 
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      try {
-        const response = await fetch("/api/requests", { cache: "no-store" });
-        if (!response.ok) throw new Error("Failed to load");
-        const data = (await response.json()) as ApiRequest[];
-        if (!cancelled) setHistory(data.map(toRecord));
-      } catch {
-        if (!cancelled) {
-          setNotice({
-            tone: "error",
-            text: "Unable to load your request history right now.",
-          });
-        }
-      } finally {
-        if (!cancelled) setLoading(false);
+  const mountedRef = useRef(true);
+  const sequenceRef = useRef(0);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  async function loadHistory() {
+    const seq = ++sequenceRef.current;
+    try {
+      const response = await fetch("/api/requests", { cache: "no-store" });
+      if (!response.ok) throw new Error("Failed to load");
+      const data = (await response.json()) as ApiRequest[];
+      if (mountedRef.current && seq === sequenceRef.current) {
+        setHistory(data.map(toRecord));
       }
-    })();
+    } catch {
+      if (mountedRef.current && seq === sequenceRef.current) {
+        setNotice({
+          tone: "error",
+          text: "Unable to load your request history right now.",
+        });
+      }
+    } finally {
+      if (mountedRef.current && seq === sequenceRef.current) {
+        setLoading(false);
+      }
+    }
+  }
+
+  useEffect(() => {
+    mountedRef.current = true;
+
+    const id = setTimeout(() => {
+      loadHistory();
+    }, 0);
+
+    const handleVisibility = () => {
+      if (document.visibilityState === "visible") {
+        loadHistory();
+      }
+    };
+    const handleFocus = () => {
+      loadHistory();
+    };
+
+    document.addEventListener("visibilitychange", handleVisibility);
+    window.addEventListener("focus", handleFocus);
+
+    intervalRef.current = setInterval(() => {
+      if (document.visibilityState === "visible") {
+        loadHistory();
+      }
+    }, POLL_INTERVAL_MS);
+
     return () => {
-      cancelled = true;
+      mountedRef.current = false;
+      clearTimeout(id);
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+      document.removeEventListener("visibilitychange", handleVisibility);
+      window.removeEventListener("focus", handleFocus);
     };
   }, []);
 
@@ -163,11 +205,7 @@ export default function RequestsPage() {
         });
         return;
       }
-      const refresh = await fetch("/api/requests", { cache: "no-store" });
-      if (refresh.ok) {
-        const data = (await refresh.json()) as ApiRequest[];
-        setHistory(data.map(toRecord));
-      }
+      await loadHistory();
       setReason("");
       setNote("");
       setNotice({
@@ -200,6 +238,7 @@ export default function RequestsPage() {
       }
       setHistory((current) => current.filter((entry) => entry.id !== requestId));
       setNotice({ tone: "success", text: "Request cancelled and removed." });
+      await loadHistory();
     } catch (error) {
       const message =
         error instanceof Error ? error.message : "Network error — please try again.";

@@ -9,6 +9,7 @@ import { usePortal } from "@/app/components/portal-provider";
 import {
   formatPayrollCycle,
   getAttendanceSummary,
+  getPayrollCycleDays,
   getPayrollCycleKey,
   isInPayrollCycle,
   toAttendanceRecords,
@@ -22,12 +23,16 @@ import { formatDisplayDate, formatPKR } from "@/app/lib/formatters";
 export default function DashboardPage() {
   const data = usePortal();
   const attendanceHistory = toAttendanceRecords(data);
-  const latestAttendanceCycle = data.attendance[0]
-    ? getPayrollCycleKey(data.attendance[0].date)
-    : new Date().toISOString().slice(0, 7);
+  const today = new Intl.DateTimeFormat("en-CA", {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    timeZone: data.employee.timeZone,
+  }).format(new Date());
+  const currentCycle = getPayrollCycleKey(today);
   const [deduction, setDeduction] = useState<PayrollDeduction | null>(null);
   const [deductionLoading, setDeductionLoading] = useState(true);
-  const displayedCycle = deduction?.cycle ?? latestAttendanceCycle;
+  const displayedCycle = currentCycle;
   const period = formatPayrollCycle(displayedCycle);
   const cycleAttendance = attendanceHistory.filter(
     (entry) => isInPayrollCycle(entry.date, displayedCycle),
@@ -36,7 +41,7 @@ export default function DashboardPage() {
 
   useEffect(() => {
     let cancelled = false;
-    fetchPayrollDeduction()
+    fetchPayrollDeduction(currentCycle)
       .then((row) => {
         if (!cancelled) setDeduction(row);
       })
@@ -49,11 +54,19 @@ export default function DashboardPage() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [currentCycle]);
 
-  const grossSalary = deduction ? deduction.monthlySalary : 0;
-  const dailyRate = deduction ? deduction.dailyRate : 0;
-  const deductionAmount = deduction ? deduction.deductionAmount : 0;
+  const fallbackLateHalfDayDeductionDays = Math.floor(
+    (summary.lateDays + summary.halfDays) / 3,
+  );
+  const fallbackDeductionDays =
+    summary.absentDays + fallbackLateHalfDayDeductionDays;
+  const grossSalary = deduction?.monthlySalary ?? data.employee.monthlySalary;
+  const payrollDays = deduction?.payrollDays ?? getPayrollCycleDays(displayedCycle);
+  const dailyRate = deduction?.dailyRate ??
+    (grossSalary > 0 ? Math.round((grossSalary / payrollDays) * 100) / 100 : 0);
+  const deductionAmount = deduction?.deductionAmount ??
+    Math.round(dailyRate * fallbackDeductionDays);
   const totalSalaryToReceive = Math.max(0, grossSalary - deductionAmount);
   const deductionPercent = grossSalary
     ? Math.round((deductionAmount / grossSalary) * 100)
@@ -76,7 +89,7 @@ export default function DashboardPage() {
     },
     {
       label: "Deduction Days",
-      value: deduction ? deduction.totalDeductionDays : 0,
+      value: deduction ? deduction.totalDeductionDays : fallbackDeductionDays,
       icon: "calendar" as const,
       iconClass: "bg-violet-50 text-violet-600",
       valueClass: "text-violet-700",
