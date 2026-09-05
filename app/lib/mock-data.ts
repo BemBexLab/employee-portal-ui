@@ -2,7 +2,7 @@ export type IconName =
   | "dashboard" | "calendar" | "file" | "settings" | "logout" | "menu" | "close" | "bell"
   | "chevronRight" | "clock" | "check" | "wallet" | "arrowUp" | "arrowDown" | "briefcase"
   | "mail" | "shield" | "plus" | "more" | "help" | "sparkles" | "eye" | "eyeOff"
-  | "sun" | "moon";
+  | "sun" | "moon" | "paperclip";
 
 export type NavItem = { label: string; href: string; icon: IconName };
 

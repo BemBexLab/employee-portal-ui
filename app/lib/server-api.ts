@@ -69,6 +69,15 @@ export async function authenticateEmployee(identity: string, password: string) {
   };
 }
 
+export type RequestAttachment = {
+  id: string;
+  originalName: string;
+  mimeType: string;
+  sizeBytes: number;
+  uploadedAt: string;
+  expiresAt: string;
+};
+
 export type EmployeeRequest = {
   id: string;
   kind: "LEAVE" | "REMOTE_WORK";
@@ -80,6 +89,7 @@ export type EmployeeRequest = {
   status: "PENDING" | "APPROVED" | "REJECTED" | "CANCELLED";
   submittedAt: string;
   decidedAt: string | null;
+  attachments?: RequestAttachment[];
 };
 
 export type CreateEmployeeRequestPayload = {
@@ -231,6 +241,7 @@ export type PayrollDeduction = {
   payrollDays: number;
   dailyRate: number;
   deductionAmount: number;
+  allowanceAmount: number;
   calculatedThrough: string | null;
 };
 

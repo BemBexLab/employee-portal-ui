@@ -18,6 +18,7 @@ import {
   LuMail,
   LuMenu,
   LuMoon,
+  LuPaperclip,
   LuPlus,
   LuSettings,
   LuShieldCheck,
@@ -54,6 +55,7 @@ const icons: Record<IconName, IconType> = {
   eyeOff: LuEyeOff,
   sun: LuSun,
   moon: LuMoon,
+  paperclip: LuPaperclip,
 };
 
 type IconProps = {

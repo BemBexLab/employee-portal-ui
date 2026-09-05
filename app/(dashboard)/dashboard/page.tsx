@@ -11,6 +11,7 @@ import {
   getAttendanceSummary,
   getPayrollCycleDays,
   getPayrollCycleKey,
+  getPayrollCycleRange,
   isInPayrollCycle,
   toAttendanceRecords,
 } from "@/app/lib/portal-data";
@@ -30,6 +31,7 @@ export default function DashboardPage() {
     timeZone: data.employee.timeZone,
   }).format(new Date());
   const currentCycle = getPayrollCycleKey(today);
+  const deductionCycle = getPayrollCycleRange(currentCycle).start.slice(0, 7);
   const [deduction, setDeduction] = useState<PayrollDeduction | null>(null);
   const [deductionLoading, setDeductionLoading] = useState(true);
   const displayedCycle = currentCycle;
@@ -41,7 +43,7 @@ export default function DashboardPage() {
 
   useEffect(() => {
     let cancelled = false;
-    fetchPayrollDeduction(currentCycle)
+    fetchPayrollDeduction(deductionCycle)
       .then((row) => {
         if (!cancelled) setDeduction(row);
       })
@@ -54,7 +56,7 @@ export default function DashboardPage() {
     return () => {
       cancelled = true;
     };
-  }, [currentCycle]);
+  }, [deductionCycle]);
 
   const fallbackLateHalfDayDeductionDays = Math.floor(
     (summary.lateDays + summary.halfDays) / 3,
@@ -65,12 +67,27 @@ export default function DashboardPage() {
   const payrollDays = deduction?.payrollDays ?? getPayrollCycleDays(displayedCycle);
   const dailyRate = deduction?.dailyRate ??
     (grossSalary > 0 ? Math.round((grossSalary / payrollDays) * 100) / 100 : 0);
-  const deductionAmount = deduction?.deductionAmount ??
+  const fallbackDeductionAmount =
     Math.round(dailyRate * fallbackDeductionDays);
-  const totalSalaryToReceive = Math.max(0, grossSalary - deductionAmount);
-  const deductionPercent = grossSalary
-    ? Math.round((deductionAmount / grossSalary) * 100)
+  const employeeAllowance = Number.isFinite(data.employee.allowance)
+    ? Math.max(0, data.employee.allowance)
     : 0;
+  const activeDeductionDays = deduction?.totalDeductionDays ?? fallbackDeductionDays;
+  const eligibleAllowanceAmount = activeDeductionDays >= 1
+    ? Math.max(0, deduction?.allowanceAmount ?? employeeAllowance)
+    : 0;
+  const totalDeductionAmount = deduction
+    ? Math.max(0, deduction.deductionAmount)
+    : fallbackDeductionAmount + eligibleAllowanceAmount;
+  const allowanceAmount = Math.min(
+    eligibleAllowanceAmount,
+    totalDeductionAmount,
+  );
+  const totalSalaryToReceive = Math.max(0, grossSalary - totalDeductionAmount);
+  const deductionPercent = grossSalary
+    ? Math.min(100, Math.round((totalDeductionAmount / grossSalary) * 100))
+    : 0;
+  const netPercent = Math.max(0, 100 - deductionPercent);
 
   const summaryCards = [
     {
@@ -152,7 +169,7 @@ export default function DashboardPage() {
             <div className="flex items-center gap-4"><span className="flex h-7 w-7 items-center justify-center rounded-lg bg-rose-50 text-rose-600"><Icon name="arrowDown" size={15} /></span><div className="h-px flex-1 bg-slate-200" /></div>
             <SalaryRow
               label="Estimated Deduction"
-              value={`− ${formatPKR(deductionAmount)}`}
+              value={`− ${formatPKR(totalDeductionAmount)}`}
               badge={`${deductionPercent}%`}
               deduction
             />
@@ -183,11 +200,11 @@ export default function DashboardPage() {
                 <p className="text-sm font-semibold text-slate-900">Salary breakdown</p>
                 <p className="mt-1 text-xs text-slate-500">Estimated payable amount</p>
               </div>
-              <span className="text-sm font-bold text-emerald-600">{100 - deductionPercent}% net</span>
+              <span className="text-sm font-bold text-emerald-600">{netPercent}% net</span>
             </div>
             <div className="mt-8">
               <div className="flex h-3 overflow-hidden rounded-full bg-rose-100">
-                <div className="bg-emerald-500" style={{ width: `${100 - deductionPercent}%` }} />
+                <div className="bg-emerald-500" style={{ width: `${netPercent}%` }} />
                 <div className="bg-rose-400" style={{ width: `${deductionPercent}%` }} />
               </div>
               <div className="mt-4 flex flex-wrap gap-x-5 gap-y-2 text-xs text-slate-500">
@@ -197,13 +214,13 @@ export default function DashboardPage() {
                 </span>
                 <span className="inline-flex items-center gap-2">
                   <span className="h-2 w-2 rounded-full bg-rose-400" />
-                  Deductions {formatPKR(deductionAmount)}
+                  Deductions {formatPKR(totalDeductionAmount)}
                 </span>
               </div>
             </div>
             <p className="mt-8 border-t border-slate-200 pt-4 text-xs leading-5 text-slate-500">
               {deduction
-                ? `3 late or half-day marks convert into 1 deduction day (this cycle: ${deduction.lateHalfDayDeductionDays} day${deduction.lateHalfDayDeductionDays === 1 ? "" : "s"} from late/half-day marks, ${deduction.absentDays} from absents).`
+                ? `3 late or half-day marks convert into 1 deduction day (this cycle: ${deduction.lateHalfDayDeductionDays} day${deduction.lateHalfDayDeductionDays === 1 ? "" : "s"} from late/half-day marks, ${deduction.absentDays} from absents).${allowanceAmount > 0 ? ` The total deduction includes the ${formatPKR(allowanceAmount)} allowance because this cycle has at least 1 deduction day.` : ""}`
                 : "This is an attendance-based estimate. Final payroll may include other adjustments."}
             </p>
           </div>

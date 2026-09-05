@@ -5,6 +5,7 @@ export type PortalEmployee = {
   email: string | null;
   isActive: boolean;
   monthlySalary: number;
+  allowance: number;
   joinedAt: string;
   department: string | null;
   organization: string;

@@ -80,6 +80,54 @@ export async function POST(request: Request) {
   const envError = requireEnv();
   if (envError) return envError;
 
+  const contentType = request.headers.get("content-type") ?? "";
+
+  if (contentType.includes("multipart/form-data")) {
+    try {
+      const formData = await request.formData();
+      const body: Record<string, string> = {};
+      for (const [key, value] of formData.entries()) {
+        if (typeof value === "string") body[key] = value;
+      }
+      const outbound = new FormData();
+      for (const [key, value] of formData.entries()) {
+        if (typeof value !== "string") {
+          outbound.append(key, value, (value as File).name);
+        } else {
+          outbound.append(key, value);
+        }
+      }
+      outbound.set("kind", body.kind ?? "");
+      outbound.set("fromDate", body.fromDate ?? "");
+      outbound.set("toDate", body.toDate ?? "");
+      outbound.set("reason", body.reason ?? "");
+      if (body.leaveCategory) outbound.set("leaveCategory", body.leaveCategory);
+      if (body.note) outbound.set("note", body.note);
+
+      const response = await fetch(`${nestServerUrl}/portal/requests`, {
+        method: "POST",
+        cache: "no-store",
+        headers: buildAuthHeaders(identity),
+        body: outbound,
+      });
+      const result = (await response.json().catch(() => ({}))) as {
+        id?: string;
+        submittedAt?: string;
+        message?: string;
+        attachments?: unknown[];
+        warnings?: string[];
+      };
+      if (!response.ok) {
+        return errorResponse(response.status, result.message ?? "Request failed.");
+      }
+      return NextResponse.json(result, { status: 201 });
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : "Request failed.";
+      return errorResponse(500, message);
+    }
+  }
+
   let raw: Record<string, unknown>;
   try {
     raw = (await request.json()) as Record<string, unknown>;

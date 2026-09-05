@@ -9,6 +9,7 @@ export type PayrollDeduction = {
   payrollDays: number;
   dailyRate: number;
   deductionAmount: number;
+  allowanceAmount: number;
   calculatedThrough: string | null;
 };
 
